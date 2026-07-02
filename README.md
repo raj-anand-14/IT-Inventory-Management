@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # IT Asset Manager
 
 A lightweight IT asset tracking web app built with **Google Apps Script** and **Google Sheets**. Track hardware inventory, update locations, register new assets, and view live analytics — all from a modern dashboard UI.
@@ -200,3 +201,7 @@ This project is open source. Add your preferred license file (e.g. MIT) if you p
 ---
 
 Built with Google Apps Script for teams that want simple, spreadsheet-backed IT asset management without a separate database.
+=======
+# IT-Inventory-Management
+Basic IT Inventory tool management to add  new assets, update assets with UI
+>>>>>>> 8bc1961930e6668397a7b22e83f51ef446c3c938

@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-2: #334155;
+      --border: #475569;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --purple: #a855f7;
+      --cyan: #06b6d4;
+      --radius: 12px;
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      margin: 0;
+      background: linear-gradient(160deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .app-header {
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .app-header h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .app-header p {
+      margin: 4px 0 0;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .header-badge {
+      background: rgba(59, 130, 246, 0.15);
+      color: #93c5fd;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px 28px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin: 0 0 14px;
+    }
+
+    /* Score Cards */
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .score-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .score-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    .score-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+
+    .score-card.blue::before { background: var(--accent); }
+    .score-card.green::before { background: var(--success); }
+    .score-card.amber::before { background: var(--warning); }
+    .score-card.purple::before { background: var(--purple); }
+    .score-card.cyan::before { background: var(--cyan); }
+    .score-card.red::before { background: var(--danger); }
+
+    .score-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .score-value {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+
+    .score-sub {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    /* Charts */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .charts-grid { grid-template-columns: 1fr; }
+    }
+
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+    }
+
+    .chart-card h3 {
+      margin: 0 0 16px;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 260px;
+    }
+
+    .chart-wrap.donut { height: 240px; }
+
+    /* Main content grid */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    @media (max-width: 1024px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+
+    .card h2, .card h3 {
+      margin: 0 0 18px;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+
+    label {
+      font-weight: 600;
+      display: block;
+      margin-top: 14px;
+      margin-bottom: 6px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    label:first-of-type { margin-top: 0; }
+
+    select, input {
+      padding: 11px 14px;
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: var(--text);
+      transition: border-color 0.2s;
+    }
+
+    select:focus, input:focus {
+      border-color: var(--accent);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    button {
+      padding: 12px 20px;
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent), #6366f1);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-top: 18px;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+
+    button:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+
+    button:active { transform: translateY(0); }
+
+    #status {
+      font-weight: 600;
+      margin-top: 14px;
+      font-size: 0.85rem;
+      color: var(--accent);
+      min-height: 1.2em;
+    }
+
+    .table-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .table-header-row h3 { margin: 0; }
+
+    .search-box {
+      width: 260px;
+      margin: 0;
+    }
+
+    .table-container {
+      overflow: auto;
+      max-height: 480px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.82rem;
+    }
+
+    th, td {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    th {
+      background: var(--bg);
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    tr:hover td { background: rgba(59, 130, 246, 0.06); }
+
+    td:first-child { font-weight: 700; color: #93c5fd; }
+
+    .loading-overlay {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+
+    .loading-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .view-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .view-tab {
+      padding: 8px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .view-tab.active {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: var(--accent);
+      color: #93c5fd;
+    }
+
+    .chart-panel { display: none; }
+    .chart-panel.active { display: block; }
+
+    .op-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .op-tab {
+      flex: 1;
+      padding: 10px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 0;
+    }
+
+    .op-tab.active {
+      background: rgba(34, 197, 94, 0.12);
+      border-color: var(--success);
+      color: #86efac;
+    }
+
+    .op-tab.move.active {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: var(--accent);
+      color: #93c5fd;
+    }
+
+    .op-panel { display: none; }
+    .op-panel.active { display: block; }
+
+    button.btn-success {
+      background: linear-gradient(135deg, var(--success), #16a34a);
+    }
+
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    @media (max-width: 480px) {
+      .form-row-2 { grid-template-columns: 1fr; }
+    }
+
+    #addStatus {
+      font-weight: 600;
+      margin-top: 14px;
+      font-size: 0.85rem;
+      color: var(--success);
+      min-height: 1.2em;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div>
+      <h1>IT Asset Manager</h1>
+      <p>Inventory tracking, analytics &amp; location updates</p>
+    </div>
+    <span class="header-badge" id="liveStatus">Connecting...</span>
+  </header>
+
+  <div class="container" id="mainContent" style="display:none;">
+
+    <!-- Score Cards -->
+    <section>
+      <p class="section-title">Overview</p>
+      <div class="score-grid">
+        <div class="score-card blue">
+          <div class="score-label">Total Assets</div>
+          <div class="score-value" id="statTotal">—</div>
+          <div class="score-sub">Active inventory records</div>
+        </div>
+        <div class="score-card green">
+          <div class="score-label">Room Assigned</div>
+          <div class="score-value" id="statAssigned">—</div>
+          <div class="score-sub" id="statAssignedSub">—</div>
+        </div>
+        <div class="score-card amber">
+          <div class="score-label">Categories</div>
+          <div class="score-value" id="statCategories">—</div>
+          <div class="score-sub" id="statCatSub">—</div>
+        </div>
+        <div class="score-card purple">
+          <div class="score-label">Departments</div>
+          <div class="score-value" id="statDepartments">—</div>
+          <div class="score-sub" id="statDeptSub">—</div>
+        </div>
+        <div class="score-card cyan">
+          <div class="score-label">Changes (7 days)</div>
+          <div class="score-value" id="statRecent">—</div>
+          <div class="score-sub">Location &amp; remark updates</div>
+        </div>
+        <div class="score-card red">
+          <div class="score-label">Unassigned Rooms</div>
+          <div class="score-value" id="statUnassigned">—</div>
+          <div class="score-sub">Assets without room/ward</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Charts -->
+    <section>
+      <p class="section-title">Analytics</p>
+      <div class="view-tabs">
+        <button class="view-tab active" onclick="switchChartView('trend', this)">Trend View</button>
+        <button class="view-tab" onclick="switchChartView('category', this)">By Category</button>
+        <button class="view-tab" onclick="switchChartView('department', this)">By Department</button>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div id="panelTrend" class="chart-panel active">
+            <h3>Asset Change Trend — Last 30 Days</h3>
+            <div class="chart-wrap">
+              <canvas id="trendChart"></canvas>
+            </div>
+          </div>
+          <div id="panelCategory" class="chart-panel">
+            <h3>Assets by Category</h3>
+            <div class="chart-wrap">
+              <canvas id="categoryBarChart"></canvas>
+            </div>
+          </div>
+          <div id="panelDepartment" class="chart-panel">
+            <h3>Assets by Department</h3>
+            <div class="chart-wrap">
+              <canvas id="departmentBarChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3>Category Distribution</h3>
+          <div class="chart-wrap donut">
+            <canvas id="categoryDonutChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Form + Table -->
+    <section>
+      <p class="section-title">Operations</p>
+      <div class="main-grid">
+        <div class="card">
+          <div class="op-tabs">
+            <button class="op-tab move active" onclick="switchOpTab('move', this)">Update / Move</button>
+            <button class="op-tab" onclick="switchOpTab('add', this)">Add New Asset</button>
+          </div>
+
+          <div id="panelMove" class="op-panel active">
+            <h2>Track &amp; Move Asset</h2>
+
+            <label for="assetSelect">Select Asset ID</label>
+            <select id="assetSelect" onchange="populateCurrentDetails()">
+              <option value="">-- Loading System Assets... --</option>
+            </select>
+
+            <label for="roomInput">New Room/Ward No.</label>
+            <input type="text" id="roomInput" placeholder="e.g., Ward 4B">
+
+            <label for="remarksInput">Update Remarks</label>
+            <input type="text" id="remarksInput" placeholder="e.g., Connected to Desk 1 system">
+
+            <button onclick="submitChange()">Update Asset &amp; Log</button>
+            <div id="status"></div>
+          </div>
+
+          <div id="panelAdd" class="op-panel">
+            <h2>Register New Asset</h2>
+
+            <label for="newAssetId">Asset ID *</label>
+            <input type="text" id="newAssetId" placeholder="e.g., IT-2026-042">
+
+            <label for="newAssetName">Name of the Asset *</label>
+            <input type="text" id="newAssetName" placeholder="e.g., Dell OptiPlex 7090">
+
+            <label for="newCategory">Asset Category</label>
+            <input type="text" id="newCategory" list="categoryList" placeholder="e.g., Desktop PC">
+
+            <div class="form-row-2">
+              <div>
+                <label for="newDepartment">Department</label>
+                <input type="text" id="newDepartment" list="departmentList" placeholder="e.g., Radiology">
+              </div>
+              <div>
+                <label for="newRoom">Room/Ward No.</label>
+                <input type="text" id="newRoom" placeholder="e.g., Ward 4B">
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div>
+                <label for="newModelNo">Model No.</label>
+                <input type="text" id="newModelNo" placeholder="e.g., OptiPlex 7090">
+              </div>
+              <div>
+                <label for="newSerialNo">Serial No.</label>
+                <input type="text" id="newSerialNo" placeholder="e.g., SN123456789">
+              </div>
+            </div>
+
+            <label for="newRemarks">Remarks</label>
+            <input type="text" id="newRemarks" placeholder="e.g., New procurement Q2 2026">
+
+            <button class="btn-success" onclick="submitNewAsset()">Add Asset to Inventory</button>
+            <div id="addStatus"></div>
+          </div>
+
+          <datalist id="categoryList"></datalist>
+          <datalist id="departmentList"></datalist>
+        </div>
+
+        <div class="card">
+          <div class="table-header-row">
+            <h3>Active Assets Directory</h3>
+            <input type="text" id="tableSearch" class="search-box" placeholder="Search assets..." onkeyup="filterTable()">
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Asset ID</th>
+                  <th>Name</th>
+                  <th>Category</th>
+                  <th>Room/Ward</th>
+                  <th>Department</th>
+                  <th>Model No.</th>
+                  <th>Serial No.</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="container" id="loadingState">
+    <div class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <p>Loading inventory &amp; analytics...</p>
+    </div>
+  </div>
+
+  <script>
+    let inventoryData = [];
+    let formOptions = { categories: [], departments: [] };
+    let charts = {};
+
+    const CHART_COLORS = [
+      '#3b82f6', '#22c55e', '#f59e0b', '#a855f7', '#06b6d4',
+      '#ef4444', '#ec4899', '#84cc16', '#f97316', '#6366f1'
+    ];
+
+    const chartDefaults = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: { color: '#94a3b8', font: { size: 11 } }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#94a3b8', maxRotation: 45 },
+          grid: { color: 'rgba(71, 85, 105, 0.4)' }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { color: '#94a3b8', stepSize: 1 },
+          grid: { color: 'rgba(71, 85, 105, 0.4)' }
+        }
+      }
+    };
+
+    function getVal(obj, keyName) {
+      const normTarget = keyName.toLowerCase().replace(/[^a-z0-9]/g, "");
+      for (const k in obj) {
+        if (k.toLowerCase().replace(/[^a-z0-9]/g, "") === normTarget) return obj[k];
+      }
+      return obj[keyName] || "";
+    }
+
+    function switchChartView(view, btn) {
+      document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.chart-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('panel' + view.charAt(0).toUpperCase() + view.slice(1)).classList.add('active');
+    }
+
+    function switchOpTab(view, btn) {
+      document.querySelectorAll('.op-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.op-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('panel' + view.charAt(0).toUpperCase() + view.slice(1)).classList.add('active');
+    }
+
+    function populateFormOptions() {
+      const catList = document.getElementById('categoryList');
+      const deptList = document.getElementById('departmentList');
+      catList.innerHTML = formOptions.categories.map(c => `<option value="${c}">`).join('');
+      deptList.innerHTML = formOptions.departments.map(d => `<option value="${d}">`).join('');
+    }
+
+    function clearNewAssetForm() {
+      ['newAssetId', 'newAssetName', 'newCategory', 'newDepartment', 'newRoom',
+       'newModelNo', 'newSerialNo', 'newRemarks'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+    }
+
+    function updateScoreCards(stats) {
+      document.getElementById('statTotal').textContent = stats.totalAssets;
+      document.getElementById('statAssigned').textContent = stats.assignedRooms;
+      document.getElementById('statUnassigned').textContent = stats.unassignedRooms;
+      document.getElementById('statCategories').textContent = stats.categoryCount;
+      document.getElementById('statDepartments').textContent = stats.departmentCount;
+      document.getElementById('statRecent').textContent = stats.recentChanges;
+
+      const pct = stats.totalAssets
+        ? Math.round((stats.assignedRooms / stats.totalAssets) * 100)
+        : 0;
+      document.getElementById('statAssignedSub').textContent = pct + '% of total assigned';
+      document.getElementById('statCatSub').textContent =
+        Object.keys(stats.categories).slice(0, 3).join(', ') || '—';
+      document.getElementById('statDeptSub').textContent =
+        Object.keys(stats.departments).slice(0, 3).join(', ') || '—';
+    }
+
+    function destroyCharts() {
+      Object.keys(charts).forEach(key => {
+        if (charts[key]) { charts[key].destroy(); charts[key] = null; }
+      });
+    }
+
+    function renderCharts(trend) {
+      destroyCharts();
+
+      const trendCtx = document.getElementById('trendChart').getContext('2d');
+      charts.trend = new Chart(trendCtx, {
+        type: 'line',
+        data: {
+          labels: trend.labels,
+          datasets: [{
+            label: 'Changes',
+            data: trend.changes,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.12)',
+            fill: true,
+            tension: 0.35,
+            pointRadius: 3,
+            pointHoverRadius: 6
+          }]
+        },
+        options: {
+          ...chartDefaults,
+          plugins: {
+            ...chartDefaults.plugins,
+            legend: { display: false }
+          }
+        }
+      });
+
+      const catBarCtx = document.getElementById('categoryBarChart').getContext('2d');
+      charts.categoryBar = new Chart(catBarCtx, {
+        type: 'bar',
+        data: {
+          labels: trend.categoryLabels,
+          datasets: [{
+            label: 'Assets',
+            data: trend.categoryValues,
+            backgroundColor: CHART_COLORS.slice(0, trend.categoryLabels.length),
+            borderRadius: 6
+          }]
+        },
+        options: {
+          ...chartDefaults,
+          plugins: { ...chartDefaults.plugins, legend: { display: false } }
+        }
+      });
+
+      const deptBarCtx = document.getElementById('departmentBarChart').getContext('2d');
+      charts.departmentBar = new Chart(deptBarCtx, {
+        type: 'bar',
+        data: {
+          labels: trend.departmentLabels,
+          datasets: [{
+            label: 'Assets',
+            data: trend.departmentValues,
+            backgroundColor: CHART_COLORS.slice(0, trend.departmentLabels.length),
+            borderRadius: 6
+          }]
+        },
+        options: {
+          ...chartDefaults,
+          plugins: { ...chartDefaults.plugins, legend: { display: false } }
+        }
+      });
+
+      const donutCtx = document.getElementById('categoryDonutChart').getContext('2d');
+      charts.donut = new Chart(donutCtx, {
+        type: 'doughnut',
+        data: {
+          labels: trend.categoryLabels,
+          datasets: [{
+            data: trend.categoryValues,
+            backgroundColor: CHART_COLORS.slice(0, trend.categoryLabels.length),
+            borderWidth: 2,
+            borderColor: '#1e293b'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '62%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: '#94a3b8', font: { size: 10 }, padding: 12 }
+            }
+          }
+        }
+      });
+    }
+
+    function populateInventoryUI() {
+      const select = document.getElementById('assetSelect');
+      const tableBody = document.getElementById('tableBody');
+
+      select.innerHTML = '<option value="">-- Select Asset --</option>';
+
+      let rowsHtml = '';
+      inventoryData.forEach(asset => {
+        const id = getVal(asset, 'Asset ID');
+        if (!id) return;
+
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = `${id} - ${getVal(asset, 'Name of the Asset') || 'Unnamed Asset'}`;
+        select.appendChild(opt);
+
+        rowsHtml += `<tr>
+          <td>${id}</td>
+          <td>${getVal(asset, 'Name of the Asset')}</td>
+          <td>${getVal(asset, 'Asset Category')}</td>
+          <td>${getVal(asset, 'Room/Ward No.')}</td>
+          <td>${getVal(asset, 'Department')}</td>
+          <td>${getVal(asset, 'Model No.')}</td>
+          <td>${getVal(asset, 'Serial No.')}</td>
+          <td>${getVal(asset, 'Remarks')}</td>
+        </tr>`;
+      });
+      tableBody.innerHTML = rowsHtml;
+    }
+
+    function showError(msg) {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'flex';
+      document.getElementById('liveStatus').textContent = 'Error';
+      document.getElementById('status').style.color = '#ef4444';
+      document.getElementById('status').textContent = msg;
+    }
+
+    window.onload = function() {
+      document.getElementById('loadingState').style.display = 'block';
+      document.getElementById('mainContent').style.display = 'none';
+
+      let loaded = { inventory: false, stats: false, trend: false, options: false };
+      let statsData = null;
+      let trendData = null;
+
+      function tryFinish() {
+        if (!loaded.inventory || !loaded.stats || !loaded.trend || !loaded.options) return;
+
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'flex';
+
+        populateFormOptions();
+        if (inventoryData.length === 0) {
+          document.getElementById('liveStatus').textContent = 'No Data';
+          document.getElementById('status').style.color = '#ef4444';
+          document.getElementById('status').textContent = 'No asset records found. Use Add New Asset to register one.';
+          updateScoreCards(statsData);
+          renderCharts(trendData);
+          return;
+        }
+
+        document.getElementById('liveStatus').textContent = inventoryData.length + ' Assets Live';
+        populateInventoryUI();
+        updateScoreCards(statsData);
+        renderCharts(trendData);
+      }
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          inventoryData = data || [];
+          loaded.inventory = true;
+          tryFinish();
+        })
+        .withFailureHandler(function(err) { showError('Connection failed: ' + err.message); })
+        .getInventoryData();
+
+      google.script.run
+        .withSuccessHandler(function(stats) {
+          statsData = stats;
+          loaded.stats = true;
+          tryFinish();
+        })
+        .withFailureHandler(function(err) { showError('Stats failed: ' + err.message); })
+        .getDashboardStats();
+
+      google.script.run
+        .withSuccessHandler(function(trend) {
+          trendData = trend;
+          loaded.trend = true;
+          tryFinish();
+        })
+        .withFailureHandler(function(err) { showError('Trend data failed: ' + err.message); })
+        .getTrendData();
+
+      google.script.run
+        .withSuccessHandler(function(options) {
+          formOptions = options || { categories: [], departments: [] };
+          loaded.options = true;
+          tryFinish();
+        })
+        .withFailureHandler(function(err) { showError('Form options failed: ' + err.message); })
+        .getFormOptions();
+    };
+
+    function populateCurrentDetails() {
+      const selectVal = document.getElementById('assetSelect').value;
+      const asset = inventoryData.find(a => {
+        const id = getVal(a, 'Asset ID');
+        return id.toString().trim() === selectVal.trim();
+      });
+      
+      if (asset) {
+        document.getElementById('roomInput').value = getVal(asset, 'Room/Ward No.');
+        document.getElementById('remarksInput').value = getVal(asset, 'Remarks');
+      }
+    }
+
+    function filterTable() {
+      const q = document.getElementById('tableSearch').value.toLowerCase();
+      document.querySelectorAll('#tableBody tr').forEach(r => {
+        r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+    }
+
+    function submitChange() {
+      const id = document.getElementById('assetSelect').value;
+      const room = document.getElementById('roomInput').value;
+      const remarks = document.getElementById('remarksInput').value;
+      const statusDiv = document.getElementById('status');
+
+      if (!id) {
+        alert('Please choose an asset.');
+        return;
+      }
+
+      statusDiv.style.color = '#f59e0b';
+      statusDiv.textContent = 'Writing transaction log values...';
+
+      google.script.run
+        .withSuccessHandler(function() {
+          statusDiv.style.color = '#22c55e';
+          statusDiv.textContent = 'Logs committed! Refreshing dashboard...';
+          document.getElementById('roomInput').value = '';
+          document.getElementById('remarksInput').value = '';
+          window.onload();
+        })
+        .withFailureHandler(function(err) {
+          statusDiv.style.color = '#ef4444';
+          statusDiv.textContent = 'Commit error: ' + err.message;
+        })
+        .updateAssetLocation(id, room, remarks);
+    }
+
+    function submitNewAsset() {
+      const assetId = document.getElementById('newAssetId').value.trim();
+      const assetName = document.getElementById('newAssetName').value.trim();
+      const statusDiv = document.getElementById('addStatus');
+
+      if (!assetId) {
+        alert('Asset ID is required.');
+        document.getElementById('newAssetId').focus();
+        return;
+      }
+      if (!assetName) {
+        alert('Asset name is required.');
+        document.getElementById('newAssetName').focus();
+        return;
+      }
+
+      const payload = {
+        assetId: assetId,
+        assetName: assetName,
+        category: document.getElementById('newCategory').value.trim(),
+        department: document.getElementById('newDepartment').value.trim(),
+        room: document.getElementById('newRoom').value.trim(),
+        modelNo: document.getElementById('newModelNo').value.trim(),
+        serialNo: document.getElementById('newSerialNo').value.trim(),
+        remarks: document.getElementById('newRemarks').value.trim()
+      };
+
+      statusDiv.style.color = '#f59e0b';
+      statusDiv.textContent = 'Adding asset to inventory...';
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          statusDiv.style.color = '#22c55e';
+          statusDiv.textContent = 'Asset ' + result.assetId + ' added! Refreshing dashboard...';
+          clearNewAssetForm();
+          window.onload();
+        })
+        .withFailureHandler(function(err) {
+          statusDiv.style.color = '#ef4444';
+          statusDiv.textContent = err.message;
+        })
+        .addNewAsset(payload);
+    }
+  </script>
+</body>
+</html>
